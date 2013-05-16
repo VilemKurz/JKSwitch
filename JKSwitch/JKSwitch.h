@@ -20,9 +20,21 @@
 
 @interface JKSwitch : UIControl
 
+@property (strong, nonatomic) NSString *textOff;
+@property (strong, nonatomic) NSString *textOn;
 
--(id)initWithFrame:(CGRect)frame; //width and height will be ignored
--(void)setOn:(BOOL)on animated:(BOOL)animated;
--(BOOL)on;
+@property(nonatomic, getter=isOn) BOOL on;
+
+/* background image width must be (border.width - button.width/2 - padding) * 2 */
+/* background, button, border must be of equal height */
+
+- (id)initWithOrigin:(CGPoint)origin
+     backgroundImage:(UIImage *)bgImage
+           maskImage:(UIImage *)maskImage
+         buttonImage:(UIImage *)buttonImage
+         borderImage:(UIImage *)borderImage;
+
+- (void)setOn:(BOOL)on animated:(BOOL)animated;
+
 
 @end
