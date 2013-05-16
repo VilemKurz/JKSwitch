@@ -9,7 +9,7 @@
 #import "JKSwitch.h"
 #import <QuartzCore/QuartzCore.h>
 
-#define HORZ_PADDING 0    //padding between the button and the edge of the switch.
+#define HORZ_PADDING 2    //padding between the button and the edge of the switch.
 #define TAP_SENSITIVITY 25.0 //margin of error to detect if the switch was tapped or swiped.
 
 @interface JKSwitch ()
@@ -150,7 +150,7 @@
         [UIView beginAnimations:nil context:nil];
         [UIView setAnimationCurve:UIViewAnimationCurveEaseInOut];
         [UIView setAnimationDelay:0];
-        [UIView setAnimationDuration:0.23];
+        [UIView setAnimationDuration:1];
         [self.backgroundImageView setFrame:newBackFrame];
         [self.buttonImageView setFrame:newButtonFrame];
         [UIView commitAnimations];
@@ -212,7 +212,7 @@
         [self.buttonImageView setFrame:[self leftButtonFrame]];
     }
     
-    [self.backgroundImageView setFrame:CGRectMake(self.buttonImageView.frame.origin.x - [self width] + [self buttonHorizontalDiameter], 0, [self backgroundWidth], [self height])];
+    [self.backgroundImageView setFrame:[self bgFollowingButtonRect]];
 }
 
 -(void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event{
@@ -267,11 +267,17 @@
             [UIView setAnimationDelay:0];
             [UIView setAnimationDuration:animTime];
             [self.buttonImageView setFrame:newButtonFrame];
-            [self.backgroundImageView setFrame:CGRectMake(self.buttonImageView.frame.origin.x - [self width] + [self buttonHorizontalDiameter], 0, [self backgroundWidth], [self height])];
+            [self.backgroundImageView setFrame:[self bgFollowingButtonRect]];
             [UIView commitAnimations];
         }
         [self returnStatus];
     }
+}
+
+- (CGRect)bgFollowingButtonRect {
+    
+    CGRect result = CGRectMake(self.buttonImageView.frame.origin.x - [self width] + [self buttonHorizontalDiameter] + HORZ_PADDING, 0, [self backgroundWidth], [self height]);
+    return result;
 }
 
 #pragma mark - Event handling.
