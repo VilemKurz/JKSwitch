@@ -36,6 +36,12 @@
     [self setOn:on animated:NO sendActions:NO];
 }
 
+- (void)toggleAnimated:(BOOL)animated {
+    
+    BOOL newStatus = !self.on;
+    [self setOn:newStatus animated:animated];
+}
+
 - (void)setOn:(BOOL)on animated:(BOOL)animated {
     
     [self setOn:on animated:animated sendActions:YES];
@@ -147,7 +153,7 @@
 }
 
 - (CGRect)leftBackgroundFrame {
-    CGRect result = CGRectMake(-[self width] + self.buttonImage.size.width + HORIZONTAL_PADDING,
+    CGRect result = CGRectMake(self.buttonImage.size.width + HORIZONTAL_PADDING - [self width],
                                0,
                                self.backgroundImage.size.width,
                                [self height]);
@@ -173,10 +179,10 @@
     return result;
 }
 
-- (void)toggleAnimated:(BOOL)animated {
+- (CGFloat)maxButtonXMovement {
     
-    BOOL newStatus = !self.on;
-    [self setOn:newStatus animated:animated];
+    CGFloat result = [self width] - self.buttonImage.size.height - HORIZONTAL_PADDING;
+    return result;
 }
 
 #pragma mark - Touch event methods.
@@ -229,6 +235,7 @@
         //SWIPED 
         CGRect newButtonFrame;
         BOOL needsMove = NO;
+        CGFloat currentButtonMovement;
         
         //If the button is languishing somewhere in the middle of the switch
         //move it to either on or off.
@@ -247,19 +254,24 @@
             
             //move left
             newButtonFrame = [self leftButtonFrame];
+            currentButtonMovement = CGRectGetMinX(self.buttonImageView.frame) - CGRectGetMinX(newButtonFrame);
             _on = NO;
             needsMove = YES;
         
         } else if (self.buttonImageView.center.x > self.borderImageView.center.x) {
             //move right
             newButtonFrame = [self rightButtonFrame];
+            currentButtonMovement = CGRectGetMinX([self rightButtonFrame]) - CGRectGetMinX(self.buttonImageView.frame);
             _on = YES;
             needsMove = YES;
         }
         
         if (needsMove){
             
-            [UIView animateWithDuration:ANIMATION_DURATION
+            //duration shortened if we do not move from end to end
+            NSTimeInterval durationFraction = (currentButtonMovement * ANIMATION_DURATION) / [self maxButtonXMovement];
+            
+            [UIView animateWithDuration:durationFraction
                              animations:^{
                                  
                                  [self.buttonImageView setFrame:newButtonFrame];
