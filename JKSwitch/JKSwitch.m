@@ -18,7 +18,6 @@
 @property (strong, nonatomic) UIImage *buttonImage;
 @property (strong, nonatomic) UIImage *backgroundImage;
 @property (strong, nonatomic) UIImage *borderImage;
-@property (strong, nonatomic) UIImage *maskImage;
 
 @property (strong, nonatomic) UIImageView *backgroundImageView;
 @property (strong, nonatomic) UIImageView *buttonImageView;
@@ -30,6 +29,70 @@
 @end
 
 @implementation JKSwitch
+
+- (id)initWithOrigin:(CGPoint)origin
+     backgroundImage:(UIImage *)bgImage
+         buttonImage:(UIImage *)buttonImage
+         borderImage:(UIImage *)borderImage {
+    
+    self = [super initWithFrame:CGRectMake(origin.x, origin.y, borderImage.size.width, borderImage.size.height)];
+    
+    if (self) {
+        
+        _backgroundImage = bgImage;
+        _buttonImage = buttonImage;
+        _borderImage = borderImage;
+        
+        _backgroundImageView = [[UIImageView alloc] initWithImage:self.backgroundImage];
+        [self addSubview:_backgroundImageView];
+        
+        _borderImageView = [[UIImageView alloc] initWithImage:self.borderImage];
+        [self addSubview:_borderImageView];
+        
+        _buttonImageView = [[UIImageView alloc] initWithImage:self.buttonImage];
+        [self addSubview:_buttonImageView];
+        
+        self.clipsToBounds = YES;
+        
+        [self setOn:NO];
+    }
+    
+    return self;
+}
+
+- (void)setLeftView:(UIView *)leftView {
+    
+    _leftView = leftView;
+    
+    CGRect frame = CGRectMake(0, 0, [self labelWidth], [self height]);
+    leftView.frame = UIEdgeInsetsInsetRect(frame, self.leftViewInsets);
+    [self.backgroundImageView addSubview:leftView];
+}
+
+- (void)setLeftViewInsets:(UIEdgeInsets)leftViewInsets {
+    
+    _leftViewInsets = leftViewInsets;
+    
+    self.leftView.frame = UIEdgeInsetsInsetRect(self.leftView.frame, leftViewInsets);
+}
+
+- (void)setRightView:(UIView *)rightView {
+    
+    _rightView = rightView;
+    
+    CGRect frame = CGRectMake(self.backgroundImageView.frame.size.width - [self labelWidth], 0, [self labelWidth], [self height]);
+    rightView.frame = UIEdgeInsetsInsetRect(frame, self.rightViewInsets);
+    [self.backgroundImageView addSubview:rightView];    
+}
+
+- (void)setRightViewInsets:(UIEdgeInsets)rightViewInsets {
+    
+    _rightViewInsets = rightViewInsets;
+    
+    self.rightView.frame = UIEdgeInsetsInsetRect(self.rightView.frame, rightViewInsets);
+}
+
+#pragma mark switch functions
 
 - (void)setOn:(BOOL)on {
     
@@ -78,65 +141,6 @@
     }
 }
 
-- (id)initWithOrigin:(CGPoint)origin
-     backgroundImage:(UIImage *)bgImage
-           maskImage:(UIImage *)maskImage
-         buttonImage:(UIImage *)buttonImage
-         borderImage:(UIImage *)borderImage {
-    
-    self = [super initWithFrame:CGRectMake(origin.x, origin.y, borderImage.size.width, borderImage.size.height)];
-    
-    if (self) {
-        
-        _backgroundImage = bgImage;
-        _maskImage = maskImage;
-        _buttonImage = buttonImage;
-        _borderImage = borderImage;
-        
-        [self setupLayout];
-    }
-    
-    return self;
-}
-
-- (void)setupLayout {
-    
-    self.layer.masksToBounds = YES;
-    
-    //masked view
-    //  ->background image
-    //  ->mask
-    //button image
-    //border image
-    //
-    //The mask is placed over the view, then the background image is slid left and right inside the view.
-    //If the mask is applied to the background image directly then the mask will move around with it.
-    
-    UIView *maskedView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, [self width], [self height])];
-    [self addSubview:maskedView];
-    
-    self.backgroundImageView = [[UIImageView alloc] initWithFrame:[self leftBackgroundFrame]];
-    [self.backgroundImageView setImage:self.backgroundImage];
-    [maskedView addSubview:self.backgroundImageView];
-    
-    if (self.maskImage) {
-        
-        CALayer *mask = [CALayer layer];
-        mask.contents = (id)[self.maskImage CGImage];
-        mask.frame = CGRectMake(0, 0, self.maskImage.size.width, self.maskImage.size.height);
-        maskedView.layer.mask = mask;
-        maskedView.layer.masksToBounds = YES;
-    }
-    
-    self.borderImageView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, [self width], [self height])];
-    [self.borderImageView setImage:self.borderImage];
-    [self addSubview:self.borderImageView];
-    
-    self.buttonImageView = [[UIImageView alloc] initWithFrame:[self leftButtonFrame]];
-    [self.buttonImageView setImage:self.buttonImage];
-    [self addSubview:self.buttonImageView];
-}
-
 #pragma mark - dynamic frames
 
 - (CGFloat)height {
@@ -147,26 +151,19 @@
     return self.borderImage.size.width;
 }
 
+- (CGFloat)labelWidth {
+    
+    CGFloat result = (self.backgroundImageView.frame.size.width - self.buttonImageView.frame.size.width)/2;
+    return result;
+}
+
 - (CGRect)leftButtonFrame {
     CGRect result = CGRectMake(HORIZONTAL_PADDING, 0, self.buttonImage.size.width, self.buttonImage.size.height);
     return result;
 }
 
-- (CGRect)leftBackgroundFrame {
-    CGRect result = CGRectMake(self.buttonImage.size.width + HORIZONTAL_PADDING - [self width],
-                               0,
-                               self.backgroundImage.size.width,
-                               [self height]);
-    return result;
-}
-
 - (CGRect)rightButtonFrame {
     CGRect result = CGRectMake([self width] - self.buttonImage.size.width - HORIZONTAL_PADDING, 0, self.buttonImage.size.width, self.buttonImage.size.height);
-    return result;
-}
-
-- (CGRect)rightBackgroundFrame {
-    CGRect result = CGRectMake(0, 0, self.backgroundImage.size.width, [self height]);
     return result;
 }
 
@@ -185,7 +182,9 @@
     return result;
 }
 
-#pragma mark - Touch event methods.
+#pragma mark - touch tracking
+
+/* based on touch tracking code by JKSwitch */
 
 - (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event {
     
@@ -234,40 +233,22 @@
     } else {
         //SWIPED 
         CGRect newButtonFrame;
-        BOOL needsMove = NO;
         CGFloat currentButtonMovement;
         
-        //If the button is languishing somewhere in the middle of the switch
-        //move it to either on or off.
-        
-        //First, edge cases
-        if (self.buttonImageView.frame.origin.x == CGRectGetMinX([self leftButtonFrame])) {
-            
-            _on = NO;
-        
-        } else if (self.buttonImageView.frame.origin.x == CGRectGetMinX([self rightButtonFrame])) {
-            
-            _on = YES;
-        
-        //Then, right or left
-        } else if (self.buttonImageView.center.x < self.borderImageView.center.x) {
+        if (self.buttonImageView.center.x < self.borderImageView.center.x) {
             
             //move left
             newButtonFrame = [self leftButtonFrame];
             currentButtonMovement = CGRectGetMinX(self.buttonImageView.frame) - CGRectGetMinX(newButtonFrame);
             _on = NO;
-            needsMove = YES;
         
-        } else if (self.buttonImageView.center.x > self.borderImageView.center.x) {
+        } else  {
             //move right
             newButtonFrame = [self rightButtonFrame];
             currentButtonMovement = CGRectGetMinX([self rightButtonFrame]) - CGRectGetMinX(self.buttonImageView.frame);
             _on = YES;
-            needsMove = YES;
         }
-        
-        if (needsMove){
-            
+                   
             //duration shortened if we do not move from end to end
             NSTimeInterval durationFraction = (currentButtonMovement * ANIMATION_DURATION) / [self maxButtonXMovement];
             
@@ -280,11 +261,7 @@
                              completion:^(BOOL finished){
                                  
                                  [self sendActionsForControlEvents:UIControlEventValueChanged];
-                             }];
-        } else {
-            
-            [self sendActionsForControlEvents:UIControlEventValueChanged];
-        }        
+                             }];    
     }
 }
 

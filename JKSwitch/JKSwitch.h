@@ -20,8 +20,13 @@
 
 @interface JKSwitch : UIControl
 
-@property (strong, nonatomic) NSString *textOff;
-@property (strong, nonatomic) NSString *textOn;
+/* views are resized to fill the space between button and background view edges */
+@property (strong, nonatomic) UIView *leftView;
+@property (strong, nonatomic) UIView *rightView;
+
+/* set these if you wish to displace the views */
+@property (nonatomic) UIEdgeInsets rightViewInsets;
+@property (nonatomic) UIEdgeInsets leftViewInsets;
 
 @property(nonatomic, getter=isOn) BOOL on;
 
@@ -30,7 +35,6 @@
 
 - (id)initWithOrigin:(CGPoint)origin
      backgroundImage:(UIImage *)bgImage
-           maskImage:(UIImage *)maskImage
          buttonImage:(UIImage *)buttonImage
          borderImage:(UIImage *)borderImage;
 
