@@ -53,8 +53,6 @@
         [self addSubview:_buttonImageView];
         
         self.clipsToBounds = YES;
-        
-        [self setOn:NO];
     }
     
     return self;
